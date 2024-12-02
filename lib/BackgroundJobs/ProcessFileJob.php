@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\WorkflowOcr\BackgroundJobs;
 
+use OC\Core\Command\Info\FileUtils;
 use OCA\WorkflowOcr\Model\WorkflowSettings;
 use OCA\WorkflowOcr\Service\INotificationService;
 use OCA\WorkflowOcr\Service\IOcrService;
@@ -44,16 +45,20 @@ class ProcessFileJob extends \OCP\BackgroundJob\QueuedJob {
 	private $ocrService;
 	/** @var INotificationService */
 	private $notificationService;
+	/** @var fileUtils */
+	private $fileUtils;
 	
 	public function __construct(
 		LoggerInterface $logger,
 		IOcrService $ocrService,
 		INotificationService $notificationService,
-		ITimeFactory $timeFactory) {
+		ITimeFactory $timeFactory,
+		FileUtils $fileUtils) {
 		parent::__construct($timeFactory);
 		$this->logger = $logger;
 		$this->ocrService = $ocrService;
 		$this->notificationService = $notificationService;
+		$this->fileUtils = $fileUtils;
 	}
 	
 	/**
@@ -64,6 +69,16 @@ class ProcessFileJob extends \OCP\BackgroundJob\QueuedJob {
 
 		try {
 			[$fileId, $uid, $settings] = $this->parseArguments($argument);
+
+			$node = $this->fileUtils->getNode((string)$fileId);
+                        $filesPerUser = $this->fileUtils->getFilesByUser($node);
+                        $userFile = $filesPerUser[$uid][0];
+                        $permissions = $userFile->getPermissions();
+                        
+			if (!$userFile->isUpdateable()) {
+                                $uid = $node->getOwner()->getUID();
+                        }
+
 			$this->ocrService->runOcrProcess($fileId, $uid, $settings);
 		} catch (\Throwable $ex) {
 			$this->logger->error($ex->getMessage(), ['exception' => $ex]);

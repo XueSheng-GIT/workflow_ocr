@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\WorkflowOcr\Service;
 
+use OC\Core\Command\Info\FileUtils;
 use OC\User\NoUserException;
 use OCA\WorkflowOcr\Exception\OcrResultEmptyException;
 use OCA\WorkflowOcr\Helper\IProcessingFileAccessor;
@@ -79,6 +80,9 @@ class OcrService implements IOcrService {
 	/** @var LoggerInterface */
 	private $logger;
 
+	/** @var fileUtils */
+	private $fileUtils;
+
 	public function __construct(
 		IOcrProcessorFactory $ocrProcessorFactory,
 		IGlobalSettingsService $globalSettingsService,
@@ -90,7 +94,8 @@ class OcrService implements IOcrService {
 		IEventService $eventService,
 		IViewFactory $viewFactory,
 		IProcessingFileAccessor $processingFileAccessor,
-		LoggerInterface $logger) {
+		LoggerInterface $logger,
+		FileUtils $fileUtils) {
 		$this->ocrProcessorFactory = $ocrProcessorFactory;
 		$this->globalSettingsService = $globalSettingsService;
 		$this->systemTagObjectMapper = $systemTagObjectMapper;
@@ -102,6 +107,7 @@ class OcrService implements IOcrService {
 		$this->viewFactory = $viewFactory;
 		$this->processingFileAccessor = $processingFileAccessor;
 		$this->logger = $logger;
+		$this->fileUtils = $fileUtils;
 	}
 
 	/** @inheritdoc */
@@ -110,6 +116,8 @@ class OcrService implements IOcrService {
 			$this->initUserEnvironment($uid);
 
 			$file = $this->getNode($fileId);
+			$filesPerUser = $this->fileUtils->getFilesByUser($file);
+                        $file = $filesPerUser[$uid][0];
 			$ocrProcessor = $this->ocrProcessorFactory->create($file->getMimeType());
 			$globalSettings = $this->globalSettingsService->getGlobalSettings();
 			
