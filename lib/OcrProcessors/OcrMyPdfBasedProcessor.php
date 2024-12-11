@@ -116,6 +116,10 @@ abstract class OcrMyPdfBasedProcessor implements IOcrProcessor {
 		// Default setting is quiet
 		$args = ['-q'];
 
+		// Rotate page
+		$args[] = '-r';
+		$args[] = '--rotate-pages-threshold 8';
+
 		// OCR mode ('--skip-text', '--redo-ocr', '--force-ocr' or empty)
 		$args[] = self::$ocrModeToCmdParameterMapping[$settings->getOcrMode()];
 
