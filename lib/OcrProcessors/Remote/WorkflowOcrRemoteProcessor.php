@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\WorkflowOcr\OcrProcessors\Remote;
 
 use OCA\WorkflowOcr\Exception\OcrNotPossibleException;
+use OCA\WorkflowOcr\Exception\OcrResultEmptyException;
 use OCA\WorkflowOcr\Model\GlobalSettings;
 use OCA\WorkflowOcr\Model\WorkflowSettings;
 use OCA\WorkflowOcr\OcrProcessors\ICommandLineUtils;
@@ -56,6 +57,10 @@ class WorkflowOcrRemoteProcessor implements IOcrProcessor {
 		$this->logger->debug('OCR result received', ['apiResult' => $apiResult]);
 
 		if ($apiResult instanceof ErrorResult) {
+			# Ignore `force-ocr` error, see https://github.com/R0Wi-DEV/workflow_ocr/issues/293
+                        if (strpos($apiResult->getMessage(), '--force-ocr') !== false) {
+				throw new OcrResultEmptyException($apiResult->getMessage());
+                        }
 			throw new OcrNotPossibleException($apiResult->getMessage());
 		}
 

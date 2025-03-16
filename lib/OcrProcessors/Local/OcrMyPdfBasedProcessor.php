@@ -63,6 +63,10 @@ abstract class OcrMyPdfBasedProcessor implements IOcrProcessor {
 		$exitCode = $this->command->getExitCode();
 
 		if (!$success) {
+			# Ignore `force-ocr` error, see https://github.com/R0Wi-DEV/workflow_ocr/issues/293
+                        if (strpos($errorOutput, '--force-ocr') !== false) {
+				throw new OcrResultEmptyException('OCRmyPDF did not produce any output for file ' . $file->getPath() . '. Message: ' . $errorOutput . ' ' . $stdErr);
+                        }
 			throw new OcrNotPossibleException('OCRmyPDF exited abnormally with exit-code ' . $exitCode . ' for file ' . $file->getPath() . '. Message: ' . $errorOutput . ' ' . $stdErr);
 		}
 
