@@ -68,6 +68,13 @@ abstract class OcrMyPdfBasedProcessor implements IOcrProcessor {
 			if ($exitCode === 6) {
 				throw new OcrAlreadyDoneException('File ' . $file->getPath() . ' appears to contain text so it may not need OCR. Message: ' . $errorOutput . ' ' . $stdErr);
 			}
+
+			# Gracefully handle OCR_MODE_SKIP_FILE (TaggedPDFError), if easyOCR is used.
+			# Workaround for upstream issue: https://github.com/ocrmypdf/OCRmyPDF/issues/1551
+                        if ($exitCode === 2 && strpos($stdErr, 'TaggedPDFError') !== false) {
+                                throw new OcrAlreadyDoneException('File ' . $file->getPath() . ' is a TaggedPDF and probably contains text so it may not need OCR. Message: ' . $errorOutput . ' ' . $stdErr);
+			}
+
 			throw new OcrNotPossibleException('OCRmyPDF exited abnormally with exit-code ' . $exitCode . ' for file ' . $file->getPath() . '. Message: ' . $errorOutput . ' ' . $stdErr);
 		}
 
